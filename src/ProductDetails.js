@@ -10,21 +10,15 @@ const ProductDetails = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/products/${id}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Product not found');
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setProduct(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.message);
-        setLoading(false);
-      });
+    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
+    const foundProduct = storedProducts.find((product) => product.id === parseInt(id));
+
+    if (foundProduct) {
+      setProduct(foundProduct);
+    } else {
+      setError('Product not found');
+    }
+    setLoading(false);
   }, [id]);
 
   if (loading) {
@@ -36,7 +30,7 @@ const ProductDetails = () => {
   }
 
   return (
-    <div className='product-details-global'>
+    <div className="product-details-global">
       <button onClick={() => navigate('/products')} className="back-button">
         ← Back to Products
       </button>
@@ -44,9 +38,9 @@ const ProductDetails = () => {
         {product && (
           <>
             <img src={product.image} alt={product.name} className="product-image" />
-            <div className='info-product'>
+            <div className="info-product">
               <h1>{product.title}</h1>
-              <p>{product.description}</p>  
+              <p>{product.description}</p>
             </div>
           </>
         )}

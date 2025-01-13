@@ -14,30 +14,23 @@ const CreateProduct = () => {
     }
 
     const newProduct = {
+      id: Date.now(),
       title,
       description,
       image,
       liked: false,
     };
 
-    fetch('http://localhost:5000/products', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newProduct),
-    })
-      .then((response) => response.json())
-      .then(() => {
-        alert('Product added successfully!');
-        setTitle('');
-        setDescription('');
-        setImage('');
-      })
-      .catch((error) => {
-        console.error('Error adding product:', error);
-        alert('Error adding product!');
-      });
+    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
+
+    const updatedProducts = [...storedProducts, newProduct];
+
+    localStorage.setItem('products', JSON.stringify(updatedProducts));
+
+    alert('Product added successfully!');
+    setTitle('');
+    setDescription('');
+    setImage('');
   };
 
   return (

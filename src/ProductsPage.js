@@ -10,10 +10,8 @@ const ProductsPage = () => {
   const productsPerPage = 5;
 
   useEffect(() => {
-    fetch('http://localhost:5000/products')
-      .then((response) => response.json())
-      .then((data) => setProducts(data))
-      .catch((error) => console.error('Error fetching products:', error));
+    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
+    setProducts(storedProducts);
   }, []);
 
   const toggleLike = (id) => {
@@ -21,31 +19,13 @@ const ProductsPage = () => {
       product.id === id ? { ...product, liked: !product.liked } : product
     );
     setProducts(updatedProducts);
-
     localStorage.setItem('products', JSON.stringify(updatedProducts));
-
-    fetch(`http://localhost:5000/products/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ liked: updatedProducts.find((p) => p.id === id).liked }),
-    }).catch((error) => console.error('Error updating like status:', error));
   };
 
   const deleteProduct = (id) => {
-    fetch(`http://localhost:5000/products/${id}`, {
-      method: 'DELETE',
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to delete product with id ${id}`);
-        }
-
-        const updatedProducts = products.filter((product) => product.id !== id);
-        setProducts(updatedProducts);
-
-        localStorage.setItem('products', JSON.stringify(updatedProducts));
-      })
-      .catch((error) => console.error('Error deleting product:', error));
+    const updatedProducts = products.filter((product) => product.id !== id);
+    setProducts(updatedProducts);
+    localStorage.setItem('products', JSON.stringify(updatedProducts));
   };
 
   const filteredProducts = products.filter((product) => {
@@ -116,7 +96,7 @@ const ProductsPage = () => {
               >
                 <img src={product.image} alt={product.title} className="product-image" />
                 <div className="product-content">
-                  <h2>{product.title} {product.id}</h2>
+                  <h2>{product.title}</h2>
                   <p>{product.description}</p>
                 </div>
               </Link>
@@ -126,10 +106,10 @@ const ProductsPage = () => {
                   className="delete-button"
                   onClick={() => deleteProduct(product.id)}
                 >
-                  <i class="bi bi-trash-fill"></i>
+                  <i className="bi bi-trash-fill"></i>
                 </button>
                 <Link to={`/edit-product/${product.id}`} className="edit-link">
-                <i class="bi bi-gear-wide-connected"></i>
+                  <i className="bi bi-gear-wide-connected"></i>
                 </Link>
               </div>
             </div>
