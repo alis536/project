@@ -10,22 +10,53 @@ const ProductsPage = () => {
   const productsPerPage = 5;
 
   useEffect(() => {
-    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
-    setProducts(storedProducts);
+    fetchProducts();
   }, []);
 
-  const toggleLike = (id) => {
-    const updatedProducts = products.map((product) =>
-      product.id === id ? { ...product, liked: !product.liked } : product
-    );
-    setProducts(updatedProducts);
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('https://server-hh.onrender.com/products');
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const deleteProduct = (id) => {
-    const updatedProducts = products.filter((product) => product.id !== id);
-    setProducts(updatedProducts);
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
+  const toggleLike = async (id) => {
+    try {
+      const product = products.find((p) => p.id === id);
+      const updatedProduct = { ...product, liked: !product.liked };
+
+      const response = await fetch(`https://server-hh.onrender.com/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProduct),
+      });
+
+      if (!response.ok) throw new Error('Failed to update like status');
+
+      setProducts((prev) =>
+        prev.map((p) => (p.id === id ? updatedProduct : p))
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:4000/products/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete product');
+
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const filteredProducts = products.filter((product) => {
@@ -39,21 +70,8 @@ const ProductsPage = () => {
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const renderLikeButton = (product) => {
-    return (
-      <button
-        className={`like-button ${product.liked ? 'liked' : ''}`}
-        onClick={() => toggleLike(product.id)}
-      >
-        <i className={`fa ${product.liked ? 'fa-heart' : 'fa-heart-o'}`}></i>
-      </button>
-    );
-  };
 
   return (
     <div className="products-page">
@@ -101,11 +119,13 @@ const ProductsPage = () => {
                 </div>
               </Link>
               <div className="product-actions">
-                {renderLikeButton(product)}
                 <button
-                  className="delete-button"
-                  onClick={() => deleteProduct(product.id)}
+                  className={`like-button ${product.liked ? 'liked' : ''}`}
+                  onClick={() => toggleLike(product.id)}
                 >
+                  <i className={`fa ${product.liked ? 'fa-heart' : 'fa-heart-o'}`}></i>
+                </button>
+                <button className="delete-button" onClick={() => deleteProduct(product.id)}>
                   <i className="bi bi-trash-fill"></i>
                 </button>
                 <Link to={`/edit-product/${product.id}`} className="edit-link">

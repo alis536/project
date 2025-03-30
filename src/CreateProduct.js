@@ -5,32 +5,38 @@ const CreateProduct = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !description || !image) {
       alert('Please fill in all fields!');
       return;
     }
 
-    const newProduct = {
-      id: Date.now(),
-      title,
-      description,
-      image,
-      liked: false,
-    };
+    const newProduct = { title, description, image, liked: false };
 
-    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
+    try {
+      setLoading(true);
+      const response = await fetch('https://server-hh.onrender.com/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct),
+      });
 
-    const updatedProducts = [...storedProducts, newProduct];
+      if (!response.ok) {
+        throw new Error('Failed to add product');
+      }
 
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
-
-    alert('Product added successfully!');
-    setTitle('');
-    setDescription('');
-    setImage('');
+      alert('Product added successfully!');
+      setTitle('');
+      setDescription('');
+      setImage('');
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,8 +72,8 @@ const CreateProduct = () => {
             onChange={(e) => setImage(e.target.value)}
           />
         </div>
-        <button type="submit" className="btn-submit">
-          Add Product
+        <button type="submit" className="btn-submit" disabled={loading}>
+          {loading ? 'Adding...' : 'Add Product'}
         </button>
       </form>
     </div>

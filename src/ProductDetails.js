@@ -10,24 +10,25 @@ const ProductDetails = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
-    const foundProduct = storedProducts.find((product) => product.id === parseInt(id));
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`https://server-hh.onrender.com/products/${id}`);
+        if (!response.ok) throw new Error('Product not found');
 
-    if (foundProduct) {
-      setProduct(foundProduct);
-    } else {
-      setError('Product not found');
-    }
-    setLoading(false);
+        const data = await response.json();
+        setProduct(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
   }, [id]);
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (error) {
-    return <p>Error: {error}</p>;
-  }
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="error-message">Error: {error}</p>;
 
   return (
     <div className="product-details-global">
@@ -37,7 +38,7 @@ const ProductDetails = () => {
       <div className="product-details">
         {product && (
           <>
-            <img src={product.image} alt={product.name} className="product-image" />
+            <img src={product.image} alt={product.title} className="product-image" />
             <div className="info-product">
               <h1>{product.title}</h1>
               <p>{product.description}</p>

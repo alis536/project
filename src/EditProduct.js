@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const API_URL = 'https://server-hh.onrender.com/products';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -11,42 +14,59 @@ const EditProduct = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
-    const foundProduct = storedProducts.find((product) => product.id === parseInt(id));
-
-    if (foundProduct) {
-      setTitle(foundProduct.title);
-      setDescription(foundProduct.description);
-      setImage(foundProduct.image);
-    } else {
-      setError('Product not found');
-    }
+    fetchProduct();
   }, [id]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const fetchProduct = async () => {
+    try {
+      const response = await axios.get(`https://server-hh.onrender.com/products/${id}`);
 
+      if (response.status === 200) {
+        const product = response.data;
+        console.log('Fetched product:', product); // Проверяем, что приходит с сервера
+        setTitle(product.title);
+        setDescription(product.description);
+        setImage(product.image);
+      } else {
+        throw new Error('Product not found');
+      }
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      setError('Product not found');
+    }
+  };
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Создаём объект с обновлёнными данными
     const updatedProduct = {
-      id: parseInt(id),
       title,
       description,
       image,
-      liked: false,
     };
-
-    const storedProducts = JSON.parse(localStorage.getItem('products')) || [];
-    const updatedProducts = storedProducts.map((product) =>
-      product.id === parseInt(id) ? updatedProduct : product
-    );
-
-    localStorage.setItem('products', JSON.stringify(updatedProducts));
-    alert('Product updated successfully!');
-    navigate('/products');
+  
+    try {
+      const response = await axios.put(
+        `https://server-hh.onrender.com/products/${id}`,
+        updatedProduct,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+  
+      if (response.status === 200) {
+        alert('Продукт обновлён успешно!');
+        navigate('/products'); // Перенаправляем на страницу со списком продуктов
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении продукта:', error);
+      alert('Не удалось обновить продукт');
+    }
   };
+  
 
-  if (error) {
-    return <p>{error}</p>;
-  }
+
+  if (error) return <p>{error}</p>;
 
   return (
     <div className="edit-product">
@@ -54,29 +74,15 @@ const EditProduct = () => {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">Product Title</label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
         <div className="form-group">
           <label htmlFor="description">Description</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          ></textarea>
+          <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
         </div>
         <div className="form-group">
           <label htmlFor="image">Image URL</label>
-          <input
-            type="text"
-            id="image"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-          />
+          <input type="text" id="image" value={image} onChange={(e) => setImage(e.target.value)} />
         </div>
         <button type="submit" className="btn-submit">
           Save Changes
