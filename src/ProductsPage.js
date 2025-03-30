@@ -47,7 +47,7 @@ const ProductsPage = () => {
 
   const deleteProduct = async (id) => {
     try {
-      const response = await fetch(`http://localhost:4000/products/${id}`, {
+      const response = await fetch(`https://server-hh.onrender.com/products/${id}`, {
         method: 'DELETE',
       });
 
